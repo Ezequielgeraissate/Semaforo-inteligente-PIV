@@ -13,7 +13,9 @@ void setup() {
 
 void loop() {
 
-  lerSensores();
+lerSensores();
+
+  enviarEventosSensores();
 
   processarComunicacao();
 

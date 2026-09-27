@@ -11,4 +11,6 @@ void enviarEstadoSensores();
 
 void enviarEstadoSemaforos();
 
+void enviarEventosSensores();
+
 #endif

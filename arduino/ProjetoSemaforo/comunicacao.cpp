@@ -78,3 +78,39 @@ void enviarEstadoSemaforos() {
 
   Serial.println(obterViaAberta());
 }
+
+void enviarEventosSensores() {
+
+  static bool anteriorA = false;
+  static bool anteriorB = false;
+  static bool anteriorC = false;
+  static bool anteriorD = false;
+
+  // Sensores IR normalmente trabalham em LOW quando detectam.
+  // Se o seu sensor trabalhar em HIGH, troque LOW por HIGH.
+  bool atualA = (sensorViaA() == LOW);
+  bool atualB = (sensorViaB() == LOW);
+  bool atualC = (sensorViaC() == LOW);
+  bool atualD = (sensorViaD() == LOW);
+
+  if (atualA && !anteriorA) {
+    Serial.println("DETECCAO:A");
+  }
+
+  if (atualB && !anteriorB) {
+    Serial.println("DETECCAO:B");
+  }
+
+  if (atualC && !anteriorC) {
+    Serial.println("DETECCAO:C");
+  }
+
+  if (atualD && !anteriorD) {
+    Serial.println("DETECCAO:D");
+  }
+
+  anteriorA = atualA;
+  anteriorB = atualB;
+  anteriorC = atualC;
+  anteriorD = atualD;
+}
