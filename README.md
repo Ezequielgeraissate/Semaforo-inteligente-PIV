@@ -1,35 +1,49 @@
-# Semaforo-inteligente-PIV
-Projeto Integrador V - Sistema Inteligente de Controle Semafórico com Visão Computacional e IoT
+# Semáforo Inteligente
 
-# Semáforo Inteligente - Projeto Integrador V
+Projeto desenvolvido com o objetivo de criar um sistema de controle semafórico inteligente capaz de identificar a presença e a quantidade de veículos em diferentes vias e, a partir dessas informações, auxiliar na escolha da via que deverá receber prioridade.
 
-## Integrantes
+O sistema utiliza sensores infravermelhos, Arduino Mega, Raspberry Pi, câmera OV5647 e visão computacional com YOLO-FastestV2.
 
-- Ezequiel
-- Fernando
-- Ronaldy
+---
 
-## Descrição
+## Objetivo
 
-Sistema inteligente de controle semafórico desenvolvido em maquete,
-utilizando sensores de proximidade, sensor de som, ESP32-CAM,
-Raspberry Pi com YOLO, Arduino Mega, FPGA e dashboard IoT.
+O objetivo do projeto é desenvolver um protótipo capaz de:
 
-## Arquitetura
+- detectar a presença de veículos nas vias;
+- capturar imagens do cruzamento;
+- identificar e contar veículos utilizando visão computacional;
+- definir qual via deve receber prioridade;
+- controlar quatro semáforos de forma automática e segura;
+- futuramente disponibilizar informações em um dashboard e utilizar FPGA para aceleração de alguma etapa do processamento.
 
-- Sensores: detecção de veículos e sirenes
-- ESP32-CAM: captura e envio de imagens
-- Raspberry Pi: YOLO e lógica de decisão
-- FPGA: aceleração de pré-processamento
-- Arduino Mega: controle dos semáforos
-- Dashboard: monitoramento e histórico
+---
 
-## Estrutura do projeto
+## Arquitetura Geral
 
-- `/arduino`
-- `/esp32-cam`
-- `/raspberry`
-- `/fpga`
-- `/dashboard`
-- `/docs`
-- `/testes`
+O fluxo principal do sistema é:
+
+```text
+Sensores Infravermelhos
+        ↓
+Arduino Mega
+        ↓
+Comunicação Serial USB
+        ↓
+Raspberry Pi
+        ↓
+Câmera OV5647
+        ↓
+Imagem do cruzamento
+        ↓
+YOLO-FastestV2
+        ↓
+Contagem / identificação de veículos
+        ↓
+Lógica de decisão semafórica
+        ↓
+Comunicação Serial USB
+        ↓
+Arduino Mega
+        ↓
+4 Semáforos
