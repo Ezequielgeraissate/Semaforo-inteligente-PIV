@@ -1,16 +1,16 @@
 #ifndef COMUNICACAO_H
 #define COMUNICACAO_H
 
-#include <Arduino.h>
 
 void iniciarComunicacao();
 
 void processarComunicacao();
 
+void enviarEventosSensores();
+
 void enviarEstadoSensores();
 
 void enviarEstadoSemaforos();
 
-void enviarEventosSensores();
 
 #endif
