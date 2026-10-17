@@ -1,0 +1,5 @@
+raspberry/capturas/
+raspberry/logs/
+
+__pycache__/
+*.pyc
