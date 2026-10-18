@@ -1,0 +1,572 @@
+:root {
+
+    --background:
+        #07111f;
+
+    --background-soft:
+        #0b1728;
+
+    --card:
+        rgba(18, 34, 55, 0.92);
+
+    --card-border:
+        rgba(255, 255, 255, 0.08);
+
+    --text:
+        #f5f7fb;
+
+    --muted:
+        #8fa2ba;
+
+    --blue:
+        #4c8dff;
+
+    --green:
+        #35d07f;
+
+    --yellow:
+        #ffcc4a;
+
+    --red:
+        #ff5c69;
+}
+
+
+/* =========================================
+   RESET
+========================================= */
+
+* {
+
+    box-sizing: border-box;
+
+    margin: 0;
+
+    padding: 0;
+}
+
+
+body {
+
+    min-height: 100vh;
+
+    background:
+
+        radial-gradient(
+            circle at top,
+            #132c4d 0,
+            var(--background) 48%
+        );
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+
+.container {
+
+    max-width: 1500px;
+
+    margin: auto;
+
+    padding: 36px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 30px;
+}
+
+
+.subtitle {
+
+    color: var(--blue);
+
+    text-transform: uppercase;
+
+    letter-spacing: 2px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+h1 {
+
+    font-size: 35px;
+
+    margin-top: 5px;
+
+    margin-bottom: 5px;
+}
+
+
+.description {
+
+    color: var(--muted);
+}
+
+
+/* =========================================
+   STATUS DO SISTEMA
+========================================= */
+
+.system-status {
+
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    justify-content: flex-end;
+}
+
+
+.status-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 9px 14px;
+
+    border: 1px solid var(--card-border);
+
+    background: var(--card);
+
+    border-radius: 30px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+.status-dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #5b6574;
+}
+
+
+.status-item.online
+.status-dot {
+
+    background: var(--green);
+
+    box-shadow:
+        0 0 10px var(--green);
+}
+
+
+.status-item.offline
+.status-dot {
+
+    background: var(--red);
+}
+
+
+.status-item.waiting
+.status-dot {
+
+    background: var(--yellow);
+}
+
+
+/* =========================================
+   OVERVIEW
+========================================= */
+
+.overview {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+
+.overview-card {
+
+    background: var(--card);
+
+    border:
+        1px solid
+        var(--card-border);
+
+    border-radius: 17px;
+
+    padding: 20px 24px;
+}
+
+
+.overview-card span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    margin-bottom: 9px;
+}
+
+
+.overview-card strong {
+
+    font-size: 26px;
+}
+
+
+.overview-card
+.small-value {
+
+    font-size: 17px;
+}
+
+
+/* =========================================
+   CARDS DAS VIAS
+========================================= */
+
+.vias-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 18px;
+}
+
+
+.via-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(24, 45, 73, 0.96),
+            rgba(10, 23, 39, 0.96)
+        );
+
+    border:
+        1px solid
+        var(--card-border);
+
+    border-radius: 22px;
+
+    padding: 24px;
+
+    transition:
+        transform 0.2s,
+        border 0.2s;
+}
+
+
+.via-card:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(76, 141, 255, 0.5);
+}
+
+
+.via-card.green-active {
+
+    border-color:
+        rgba(53, 208, 127, 0.6);
+
+    box-shadow:
+        0 0 25px
+        rgba(53, 208, 127, 0.09);
+}
+
+
+.via-title {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 22px;
+}
+
+
+.via-title h2 {
+
+    font-size: 21px;
+}
+
+
+.via-state {
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+
+/* =========================================
+   SEMÁFORO
+========================================= */
+
+.traffic-light {
+
+    width: 84px;
+
+    background: #05090e;
+
+    padding: 13px;
+
+    margin:
+        0 auto
+        25px;
+
+    border-radius: 25px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+    box-shadow:
+        inset 0 0 18px
+        rgba(0, 0, 0, 0.8);
+}
+
+
+.light {
+
+    width: 58px;
+
+    height: 58px;
+
+    border-radius: 50%;
+
+    background: #1b222c;
+
+    border:
+        4px solid
+        #0c1118;
+
+    opacity: 0.28;
+}
+
+
+.light.red.active {
+
+    background: var(--red);
+
+    opacity: 1;
+
+    box-shadow:
+        0 0 22px
+        rgba(255, 92, 105, 0.65);
+}
+
+
+.light.yellow.active {
+
+    background: var(--yellow);
+
+    opacity: 1;
+
+    box-shadow:
+        0 0 22px
+        rgba(255, 204, 74, 0.65);
+}
+
+
+.light.green.active {
+
+    background: var(--green);
+
+    opacity: 1;
+
+    box-shadow:
+        0 0 22px
+        rgba(53, 208, 127, 0.65);
+}
+
+
+/* =========================================
+   INFORMAÇÕES DA VIA
+========================================= */
+
+.metrics {
+
+    display: grid;
+
+    gap: 10px;
+}
+
+
+.metric {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding:
+        11px 13px;
+
+    background:
+        rgba(255,255,255,0.035);
+
+    border-radius: 10px;
+}
+
+
+.metric span {
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+.metric strong {
+
+    font-size: 13px;
+
+    text-align: right;
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+footer {
+
+    color: var(--muted);
+
+    text-align: center;
+
+    margin-top: 30px;
+
+    font-size: 12px;
+}
+
+
+.live-indicator {
+
+    display: inline-block;
+
+    width: 7px;
+
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--green);
+
+    margin-right: 6px;
+
+    box-shadow:
+        0 0 8px
+        var(--green);
+}
+
+
+/* =========================================
+   RESPONSIVO
+========================================= */
+
+@media (
+    max-width: 1100px
+) {
+
+    .vias-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+}
+
+
+@media (
+    max-width: 700px
+) {
+
+    .container {
+
+        padding: 20px;
+    }
+
+
+    .header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+
+    .system-status {
+
+        justify-content:
+            flex-start;
+    }
+
+
+    .overview {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .vias-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+}

@@ -1,4 +1,8 @@
+import threading
 import time
+
+import uvicorn
+
 
 from comunicacao.bluetooth_arduino import (
     ArduinoBluetooth
@@ -8,19 +12,125 @@ from camera.camera_rasp import (
     capturar_imagem
 )
 
-from yolo.adapter import (
-    analisar_imagem
+from dashboard.api import (
+    app
+)
+
+from estado_sistema import (
+    atualizar_status,
+    atualizar_semaforos,
+    registrar_deteccao,
+    obter_comando_pendente
 )
 
 from config import (
-    COOLDOWN_CAPTURA
+    COOLDOWN_CAPTURA,
+    DASHBOARD_HOST,
+    DASHBOARD_PORT,
+    YOLO_HABILITADO
 )
 
+
+# =====================================================
+# DASHBOARD
+# =====================================================
+
+def iniciar_dashboard():
+
+    def servidor():
+
+        uvicorn.run(
+
+            app,
+
+            host=DASHBOARD_HOST,
+
+            port=DASHBOARD_PORT,
+
+            log_level="warning"
+        )
+
+
+    thread = threading.Thread(
+
+        target=servidor,
+
+        daemon=True
+    )
+
+
+    thread.start()
+
+
+# =====================================================
+# INTERPRETAR ESTADO DOS SEMÁFOROS
+# =====================================================
+
+def processar_semaforos(
+    mensagem
+):
+
+    # Exemplo:
+    #
+    # SEMAFOROS:
+    # A=VERDE,
+    # B=VERMELHO,
+    # C=VERMELHO,
+    # D=VERMELHO
+
+
+    payload = (
+        mensagem
+        .split(
+            ":",
+            1
+        )[1]
+    )
+
+
+    estados = {}
+
+
+    for item in payload.split(","):
+
+        if "=" not in item:
+
+            continue
+
+
+        via, cor = (
+            item.split(
+                "=",
+                1
+            )
+        )
+
+
+        via = via.strip()
+
+        cor = (
+            cor
+            .strip()
+            .lower()
+        )
+
+
+        estados[via] = cor
+
+
+    atualizar_semaforos(
+        estados
+    )
+
+
+# =====================================================
+# MAIN
+# =====================================================
 
 def main():
 
     print(
-        "=============================="
+        "================================"
     )
 
     print(
@@ -28,7 +138,22 @@ def main():
     )
 
     print(
-        "=============================="
+        "================================"
+    )
+
+    print()
+
+
+    # ================================================
+    # INICIAR DASHBOARD
+    # ================================================
+
+    iniciar_dashboard()
+
+
+    print(
+        f"Dashboard iniciado na porta "
+        f"{DASHBOARD_PORT}"
     )
 
     print()
@@ -46,7 +171,11 @@ def main():
         arduino = ArduinoBluetooth()
 
 
-        print()
+        atualizar_status(
+            "bluetooth",
+            True
+        )
+
 
         print(
             "Testando comunicacao Bluetooth..."
@@ -56,8 +185,7 @@ def main():
         if not arduino.testar_conexao():
 
             raise RuntimeError(
-                "Arduino nao respondeu PONG "
-                "pelo Bluetooth."
+                "Arduino nao respondeu PONG."
             )
 
 
@@ -65,29 +193,54 @@ def main():
             "Bluetooth Raspberry <-> Arduino: OK"
         )
 
-        print()
+
+        # Solicita estado inicial
+
+        arduino.enviar(
+            "S"
+        )
 
 
         # ============================================
-        # CAPTURA
+        # LOOP
         # ============================================
 
         ultima_captura = 0
 
 
-        print(
-            "Aguardando deteccao "
-            "dos sensores..."
-        )
-
         print()
 
+        print(
+            "Aguardando eventos..."
+        )
 
-        # ============================================
-        # LOOP PRINCIPAL
-        # ============================================
 
         while True:
+
+            # ========================================
+            # COMANDO DE TESTE VINDO DA API
+            # ========================================
+
+            comando = (
+                obter_comando_pendente()
+            )
+
+
+            if comando:
+
+                print(
+                    f"Dashboard -> Arduino: "
+                    f"{comando}"
+                )
+
+                arduino.enviar(
+                    comando
+                )
+
+
+            # ========================================
+            # BLUETOOTH
+            # ========================================
 
             mensagem = (
                 arduino.ler()
@@ -96,7 +249,7 @@ def main():
 
             if mensagem is None:
 
-                time.sleep(0.05)
+                time.sleep(0.03)
 
                 continue
 
@@ -107,120 +260,136 @@ def main():
             )
 
 
-            # Só processa eventos dos sensores
+            # ========================================
+            # SEMÁFOROS
+            # ========================================
 
-            if not mensagem.startswith(
+            if mensagem.startswith(
+                "SEMAFOROS:"
+            ):
+
+                processar_semaforos(
+                    mensagem
+                )
+
+                continue
+
+
+            # ========================================
+            # SENSOR
+            # ========================================
+
+            if mensagem.startswith(
                 "DETECCAO:"
             ):
 
-                continue
+                via = (
 
+                    mensagem
 
-            agora = time.time()
+                    .split(
+                        ":",
+                        1
+                    )[1]
 
-
-            # Evita várias fotos
-            # quase simultâneas
-
-            if (
-                agora
-                - ultima_captura
-                < COOLDOWN_CAPTURA
-            ):
-
-                print(
-                    "Deteccao ignorada "
-                    "(intervalo entre capturas)."
-                )
-
-                continue
-
-
-            # ========================================
-            # VIA
-            # ========================================
-
-            via_sensor = (
-
-                mensagem
-
-                .split(
-                    ":",
-                    1
-                )[1]
-
-                .strip()
-            )
-
-
-            print()
-
-            print(
-                f"Sensor da Via {via_sensor} "
-                "detectou um veiculo."
-            )
-
-
-            try:
-
-                # ====================================
-                # 1. CAPTURA OV5647
-                # ====================================
-
-                imagem = capturar_imagem(
-                    via_sensor
+                    .strip()
                 )
 
 
-                ultima_captura = (
-                    time.time()
+                registrar_deteccao(
+                    via
                 )
 
 
-                # ====================================
-                # 2. YOLO
-                # ====================================
-
-                print(
-                    "Enviando imagem para "
-                    "o YOLO-FastestV2..."
-                )
+                agora = time.time()
 
 
-                resultado = analisar_imagem(
-                    imagem
-                )
+                if (
+                    agora
+                    - ultima_captura
+                    < COOLDOWN_CAPTURA
+                ):
+
+                    continue
 
 
-                # ====================================
-                # 3. RESULTADO
-                # ====================================
+                try:
 
-                print()
+                    # =================================
+                    # CAPTURA
+                    # =================================
 
-                print(
-                    "Resultado recebido:"
-                )
-
-                print(
-                    resultado
-                )
+                    imagem = (
+                        capturar_imagem(
+                            via
+                        )
+                    )
 
 
-            except Exception as erro:
-
-                print()
-
-                print(
-                    f"Erro no pipeline: {erro}"
-                )
+                    atualizar_status(
+                        "camera",
+                        True
+                    )
 
 
-            print()
+                    ultima_captura = (
+                        time.time()
+                    )
 
-            print(
-                "Aguardando nova deteccao..."
-            )
+
+                    print(
+                        f"Imagem capturada: "
+                        f"{imagem}"
+                    )
+
+
+                    # =================================
+                    # YOLO
+                    # =================================
+
+                    if YOLO_HABILITADO:
+
+                        from yolo.adapter import (
+                            analisar_imagem
+                        )
+
+
+                        resultado = (
+                            analisar_imagem(
+                                imagem
+                            )
+                        )
+
+
+                        atualizar_status(
+                            "yolo",
+                            True
+                        )
+
+
+                        print(
+                            "Resultado YOLO:"
+                        )
+
+                        print(
+                            resultado
+                        )
+
+
+                    else:
+
+                        print(
+                            "YOLO aguardando "
+                            "integracao do modelo."
+                        )
+
+
+                except Exception as erro:
+
+                    print(
+                        "Erro no pipeline:",
+                        erro
+                    )
 
 
     except KeyboardInterrupt:
@@ -232,12 +401,30 @@ def main():
         )
 
 
+    except Exception as erro:
+
+        print(
+            "Erro:",
+            erro
+        )
+
+
     finally:
+
+        atualizar_status(
+            "bluetooth",
+            False
+        )
+
 
         if arduino is not None:
 
             arduino.fechar()
 
+
+# =====================================================
+# EXECUÇÃO
+# =====================================================
 
 if __name__ == "__main__":
 

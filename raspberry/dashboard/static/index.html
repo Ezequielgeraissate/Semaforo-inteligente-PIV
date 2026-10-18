@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Semáforo Inteligente
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- ========================================== -->
+    <!-- CABEÇALHO -->
+    <!-- ========================================== -->
+
+    <header class="header">
+
+        <div>
+
+            <p class="subtitle">
+                Projeto Integrador
+            </p>
+
+            <h1>
+                Semáforo Inteligente
+            </h1>
+
+            <p class="description">
+                Monitoramento em tempo real das vias
+            </p>
+
+        </div>
+
+
+        <div class="system-status">
+
+            <div
+                class="status-item"
+                id="status-bluetooth"
+            >
+                <span class="status-dot"></span>
+                Bluetooth
+            </div>
+
+
+            <div
+                class="status-item"
+                id="status-camera"
+            >
+                <span class="status-dot"></span>
+                Câmera
+            </div>
+
+
+            <div
+                class="status-item"
+                id="status-yolo"
+            >
+                <span class="status-dot"></span>
+                YOLO
+            </div>
+
+
+            <div
+                class="status-item"
+                id="status-fpga"
+            >
+                <span class="status-dot"></span>
+                FPGA
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- ========================================== -->
+    <!-- RESUMO -->
+    <!-- ========================================== -->
+
+    <section class="overview">
+
+        <div class="overview-card">
+
+            <span>
+                Via atualmente aberta
+            </span>
+
+            <strong id="via-aberta">
+                -
+            </strong>
+
+        </div>
+
+
+        <div class="overview-card">
+
+            <span>
+                Última detecção
+            </span>
+
+            <strong id="ultima-deteccao">
+                -
+            </strong>
+
+        </div>
+
+
+        <div class="overview-card">
+
+            <span>
+                Última atualização
+            </span>
+
+            <strong
+                class="small-value"
+                id="ultima-atualizacao"
+            >
+                -
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- VIAS -->
+    <!-- ========================================== -->
+
+    <main
+        class="vias-grid"
+        id="vias-grid"
+    >
+
+    </main>
+
+
+    <!-- ========================================== -->
+    <!-- RODAPÉ -->
+    <!-- ========================================== -->
+
+    <footer>
+
+        <span
+            class="live-indicator"
+        ></span>
+
+        Atualização automática em tempo real
+
+    </footer>
+
+</div>
+
+
+<script
+    src="/static/app.js"
+></script>
+
+</body>
+
+</html>
