@@ -5,21 +5,10 @@ from pathlib import Path
 # DIRETORIOS
 # =====================================================
 
-BASE_DIR = Path(
-    __file__
-).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent
 
-
-PASTA_CAPTURAS = (
-    BASE_DIR
-    / "capturas"
-)
-
-
-PASTA_LOGS = (
-    BASE_DIR
-    / "logs"
-)
+PASTA_CAPTURAS = BASE_DIR / "capturas"
+PASTA_LOGS = BASE_DIR / "logs"
 
 
 # =====================================================
@@ -27,30 +16,29 @@ PASTA_LOGS = (
 # =====================================================
 
 HC05_MAC = "20:18:07:20:05:40"
-
 HC05_CHANNEL = 1
 
-
-# Porta criada pelo RFCOMM
 ARDUINO_PORTA = "/dev/rfcomm0"
-
-# Comunicação UART do HC-05
 ARDUINO_BAUD = 9600
 
 
 # =====================================================
-# CAMERA RASPBERRY
+# CAMERA
 # =====================================================
 
+# Nesta versao temporaria a camera NAO sera utilizada.
+CAMERA_HABILITADA = False
+
 CAMERA_WIDTH = 2048
-
 CAMERA_HEIGHT = 1536
-
 CAMERA_TIMEOUT_MS = 1000
 
 
-# Intervalo mínimo entre capturas
-COOLDOWN_CAPTURA = 2.0
+# =====================================================
+# YOLO
+# =====================================================
+
+YOLO_HABILITADO = False
 
 
 # =====================================================
@@ -58,14 +46,15 @@ COOLDOWN_CAPTURA = 2.0
 # =====================================================
 
 DASHBOARD_HOST = "0.0.0.0"
-
 DASHBOARD_PORT = 8000
 
 
 # =====================================================
-# YOLO
+# TESTE TEMPORARIO - FILA DE VIAS
 # =====================================================
 
-# False enquanto seu colega
-# ainda estiver integrando o modelo
-YOLO_HABILITADO = False
+# Tempo que cada via permanece verde.
+TEMPO_VERDE_TESTE = 5.0
+
+# Intervalo do loop principal.
+LOOP_DELAY = 0.05

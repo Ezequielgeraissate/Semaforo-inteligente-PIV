@@ -5,17 +5,21 @@ from threading import Lock
 
 
 # =====================================================
-# ESTADO CENTRAL DO SISTEMA
+# ESTADO GLOBAL DO SISTEMA
 # =====================================================
+
+_lock = Lock()
+_fila_comandos = Queue()
+
 
 _estado = {
 
     "sistema": {
         "bluetooth": False,
-        "camera": None,
-        "yolo": None,
+        "camera": False,
+        "yolo": False,
         "fpga": None,
-        "api": True
+        "api": True,
     },
 
     "via_aberta": "X",
@@ -24,21 +28,20 @@ _estado = {
 
     "ultima_atualizacao": None,
 
+    # Fila aguardando atendimento.
+    "fila": [],
+
     "vias": {
 
         "A": {
             "semaforo": "vermelho",
             "sensor": False,
-
-            # Dados futuros do YOLO
             "veiculos": None,
             "congestionamento": None,
-
-            # Dados futuros de prioridade
             "veiculo_prioritario": False,
             "tipo_prioritario": None,
             "tempo_espera": None,
-            "prioridade": None
+            "prioridade": None,
         },
 
         "B": {
@@ -49,7 +52,7 @@ _estado = {
             "veiculo_prioritario": False,
             "tipo_prioritario": None,
             "tempo_espera": None,
-            "prioridade": None
+            "prioridade": None,
         },
 
         "C": {
@@ -60,7 +63,7 @@ _estado = {
             "veiculo_prioritario": False,
             "tipo_prioritario": None,
             "tempo_espera": None,
-            "prioridade": None
+            "prioridade": None,
         },
 
         "D": {
@@ -71,221 +74,169 @@ _estado = {
             "veiculo_prioritario": False,
             "tipo_prioritario": None,
             "tempo_espera": None,
-            "prioridade": None
-        }
-    }
+            "prioridade": None,
+        },
+    },
 }
 
 
-_lock = Lock()
+# =====================================================
+# FUNCOES INTERNAS
+# =====================================================
 
-_fila_comandos = Queue()
+def _agora():
+    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+
+def _atualizar_timestamp():
+    _estado["ultima_atualizacao"] = _agora()
 
 
 # =====================================================
-# DATA/HORA
-# =====================================================
-
-def agora():
-
-    return datetime.now().strftime(
-        "%d/%m/%Y %H:%M:%S"
-    )
-
-
-# =====================================================
-# CONSULTAR ESTADO
+# LEITURA DO ESTADO
 # =====================================================
 
 def obter_estado():
 
     with _lock:
-
-        return deepcopy(
-            _estado
-        )
+        return deepcopy(_estado)
 
 
 # =====================================================
 # STATUS DOS COMPONENTES
 # =====================================================
 
-def atualizar_status(
-    componente,
-    valor
-):
+def atualizar_status(componente, valor):
 
     with _lock:
 
-        _estado["sistema"][
-            componente
-        ] = valor
+        if componente in _estado["sistema"]:
+            _estado["sistema"][componente] = valor
 
-        _estado[
-            "ultima_atualizacao"
-        ] = agora()
+        _atualizar_timestamp()
 
 
 # =====================================================
-# ESTADO DOS SEMÁFOROS
+# DETECCAO DOS SENSORES
 # =====================================================
 
-def atualizar_semaforos(
-    estados
-):
+def registrar_deteccao(via):
 
-    with _lock:
+    via = via.upper()
 
-        via_verde = "X"
-
-        for via in [
-            "A",
-            "B",
-            "C",
-            "D"
-        ]:
-
-            if via not in estados:
-                continue
-
-            cor = (
-                estados[via]
-                .lower()
-            )
-
-            _estado[
-                "vias"
-            ][via][
-                "semaforo"
-            ] = cor
-
-
-            if cor == "verde":
-
-                via_verde = via
-
-
-        _estado[
-            "via_aberta"
-        ] = via_verde
-
-
-        _estado[
-            "ultima_atualizacao"
-        ] = agora()
-
-
-# =====================================================
-# DETECÇÃO DE SENSOR
-# =====================================================
-
-def registrar_deteccao(
-    via
-):
-
-    if via not in [
-        "A",
-        "B",
-        "C",
-        "D"
-    ]:
-
+    if via not in _estado["vias"]:
         return
 
-
     with _lock:
 
-        _estado[
-            "ultima_deteccao"
-        ] = via
+        # Deixa somente a ultima via detectada marcada.
+        for nome_via in _estado["vias"]:
+            _estado["vias"][nome_via]["sensor"] = False
 
-        _estado[
-            "vias"
-        ][via][
-            "sensor"
-        ] = True
+        _estado["vias"][via]["sensor"] = True
 
-        _estado[
-            "ultima_atualizacao"
-        ] = agora()
+        _estado["ultima_deteccao"] = via
+
+        _atualizar_timestamp()
 
 
 # =====================================================
-# FUTURO: RESULTADO DO YOLO
+# FILA
+# =====================================================
+
+def atualizar_fila(fila):
+
+    with _lock:
+
+        _estado["fila"] = list(fila)
+
+        _atualizar_timestamp()
+
+
+# =====================================================
+# ESTADO DOS SEMAFOROS
+# =====================================================
+
+def atualizar_semaforos(estados):
+
+    with _lock:
+
+        via_aberta = "X"
+
+        for via, cor in estados.items():
+
+            via = via.upper()
+            cor = cor.lower()
+
+            if via not in _estado["vias"]:
+                continue
+
+            _estado["vias"][via]["semaforo"] = cor
+
+            if cor == "verde":
+                via_aberta = via
+
+        _estado["via_aberta"] = via_aberta
+
+        _atualizar_timestamp()
+
+
+# =====================================================
+# DADOS FUTUROS DO YOLO
 # =====================================================
 
 def atualizar_dados_via(
     via,
     veiculos=None,
     congestionamento=None,
-    veiculo_prioritario=None,
-    tipo_prioritario=None
+    veiculo_prioritario=False,
+    tipo_prioritario=None,
+    tempo_espera=None,
+    prioridade=None,
 ):
 
+    via = via.upper()
+
     if via not in _estado["vias"]:
-
         return
-
 
     with _lock:
 
-        dados = _estado[
-            "vias"
-        ][via]
-
+        dados = _estado["vias"][via]
 
         if veiculos is not None:
-
-            dados[
-                "veiculos"
-            ] = veiculos
-
+            dados["veiculos"] = veiculos
 
         if congestionamento is not None:
+            dados["congestionamento"] = congestionamento
 
-            dados[
-                "congestionamento"
-            ] = congestionamento
+        dados["veiculo_prioritario"] = veiculo_prioritario
+        dados["tipo_prioritario"] = tipo_prioritario
+        dados["tempo_espera"] = tempo_espera
+        dados["prioridade"] = prioridade
 
-
-        if veiculo_prioritario is not None:
-
-            dados[
-                "veiculo_prioritario"
-            ] = veiculo_prioritario
-
-
-        if tipo_prioritario is not None:
-
-            dados[
-                "tipo_prioritario"
-            ] = tipo_prioritario
-
-
-        _estado[
-            "ultima_atualizacao"
-        ] = agora()
+        _atualizar_timestamp()
 
 
 # =====================================================
-# COMANDOS DE TESTE
+# COMANDOS RECEBIDOS PELO DASHBOARD
 # =====================================================
 
-def enfileirar_comando(
-    comando
-):
+def enfileirar_comando(comando):
 
-    _fila_comandos.put(
-        comando
-    )
+    if comando is None:
+        return
+
+    comando = comando.strip().upper()
+
+    if comando:
+        _fila_comandos.put(comando)
 
 
 def obter_comando_pendente():
 
     try:
-
         return _fila_comandos.get_nowait()
 
     except Empty:
-
         return None
