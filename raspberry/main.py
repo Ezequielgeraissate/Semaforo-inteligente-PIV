@@ -3,6 +3,9 @@ import time
 
 import uvicorn
 
+import os
+import json
+from datetime import datetime
 
 from comunicacao.bluetooth_arduino import (
     ArduinoBluetooth
@@ -27,7 +30,8 @@ from config import (
     COOLDOWN_CAPTURA,
     DASHBOARD_HOST,
     DASHBOARD_PORT,
-    YOLO_HABILITADO
+    YOLO_HABILITADO,
+    PASTA_LOGS
 )
 
 
@@ -349,39 +353,36 @@ def main():
 
                     if YOLO_HABILITADO:
 
-                        from yolo.adapter import (
-                            analisar_imagem
-                        )
+                        from yolo.adapter import analisar_imagem
 
+                        # 1. Roda o modelo na imagem recém tirada
+                        resultado = analisar_imagem(imagem)
 
-                        resultado = (
-                            analisar_imagem(
-                                imagem
-                            )
-                        )
+                        atualizar_status("yolo", True)
 
+                        print("Resultado YOLO processado.")
 
-                        atualizar_status(
-                            "yolo",
-                            True
-                        )
+                        # 2. Criar a pasta de logs caso ela não exista
+                        PASTA_LOGS.mkdir(parents=True, exist_ok=True)
+                        
+                        # Nome do arquivo de log separado por dia
+                        hoje = datetime.now()
+                        caminho_log = PASTA_LOGS / f"log_posicoes_{hoje.strftime('%Y-%m-%d')}.txt"
 
+                        # 3. Escrever as informações no Log
+                        with open(caminho_log, "a", encoding="utf-8") as arquivo_log:
+                            hora = hoje.strftime("%H:%M:%S")
+                            # Salva a hora, a via detectada e o JSON com classe/bbox devolvido pelo C++
+                            arquivo_log.write(f"[{hora}] Via: {via} | Veiculos: {json.dumps(resultado)}\n")
 
-                        print(
-                            "Resultado YOLO:"
-                        )
-
-                        print(
-                            resultado
-                        )
-
+                        # 4. Apagar a imagem processada para liberar espaço no SD
+                        if os.path.exists(imagem):
+                            os.remove(imagem)
+                            print(f"-> Imagem {imagem} apagada. SD salvo!")
 
                     else:
 
-                        print(
-                            "YOLO aguardando "
-                            "integracao do modelo."
-                        )
+                        print("YOLO aguardando integracao do modelo.")
 
 
                 except Exception as erro:

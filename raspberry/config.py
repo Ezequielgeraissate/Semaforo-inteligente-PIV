@@ -68,4 +68,4 @@ DASHBOARD_PORT = 8000
 
 # False enquanto seu colega
 # ainda estiver integrando o modelo
-YOLO_HABILITADO = False
+YOLO_HABILITADO = True

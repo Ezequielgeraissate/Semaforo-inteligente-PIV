@@ -1,0 +1,54 @@
+=========================================================
+ GUIA DE EXECUÇÃO - INTEGRAÇÃO YOLO + PYTHON
+=========================================================
+
+Este projeto possui duas partes: o motor de processamento de imagem em C++ (YOLO) e o orquestrador/dashboard em Python. 
+Siga os passos abaixo para compilar e rodar o sistema.
+
+---------------------------------------------------------
+ PARTE 1: COMPILAÇÃO DO C++ (YOLO)
+---------------------------------------------------------
+O executável precisa ser compilado para a arquitetura da máquina onde vai rodar (PC ou Raspberry Pi). 
+É necessário ter a biblioteca NCNN instalada no sistema.
+
+1. Acesse a pasta de build do modelo:
+   cd raspberry/yolo/teste/modelo/build/
+
+2. Limpe builds anteriores (se houver):
+   rm -rf *
+
+3. Configure e compile (Ajuste o caminho do NCNN se necessário):
+   cmake -Dncnn_DIR=/CAMINHO/PARA/SUA/NCNN/build/install/lib/cmake/ncnn ..
+   make
+
+4. Mova o executável pronto para a pasta do modelo:
+   mv yolo_fastest ../
+
+---------------------------------------------------------
+ PARTE 2: AMBIENTE PYTHON E DASHBOARD
+---------------------------------------------------------
+1. Volte para a pasta principal do Python:
+   cd ../../../../../raspberry/
+
+2. Crie o ambiente virtual (Apenas na primeira vez):
+   python3 -m venv venv
+
+3. Ative o ambiente virtual:
+   source venv/bin/activate
+   # (No Windows/CMD, use: venv\Scripts\activate)
+
+4. Instale as dependências:
+   pip install uvicorn fastapi pyserial
+
+---------------------------------------------------------
+ PARTE 3: EXECUTANDO O SISTEMA
+---------------------------------------------------------
+1. Com o ambiente virtual ativado, rode:
+   python3 main.py
+
+2. Acesse o Dashboard no navegador:
+   http://localhost:8000
+
+NOTAS IMPORTANTES:
+- MODO SIMULAÇÃO: Se o Arduino (módulo Bluetooth HC-05) não for encontrado, o sistema não vai "crashar". Ele iniciará em Modo Simulação, mantendo o Dashboard online.
+- LOGS E IMAGENS: Quando uma detecção ocorre, o YOLO gera um JSON que é salvo automaticamente na pasta 'logs/', e a foto capturada é deletada em seguida para poupar espaço.
