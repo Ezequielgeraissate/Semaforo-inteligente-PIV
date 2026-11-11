@@ -8,41 +8,26 @@ from datetime import datetime
 import uvicorn
 
 
-from camera.camera_rasp import (
-    capturar_imagem
-)
+from camera.camera_rasp import capturar_imagem
 
-
-from comunicacao.bluetooth_arduino import (
-    ArduinoBluetooth
-)
-
+from comunicacao.bluetooth_arduino import ArduinoBluetooth
 
 from config import (
     COOLDOWN_CAPTURA,
     DASHBOARD_HOST,
     DASHBOARD_PORT,
+    DECISAO_AUTOMATICA_HABILITADA,
     INTERVALO_MIN_DECISAO,
     INTERVALO_STATUS_ARDUINO,
+    MANTER_IMAGENS_TESTE,
     PASTA_LOGS,
     YOLO_HABILITADO
 )
 
+from dashboard.api import app
 
-from dashboard.api import (
-    app
-)
-
-
-from decisao.logica_decisao import (
-    decidir_via
-)
-
-
-from decisao.mapeamento_vias import (
-    mapear_deteccoes
-)
-
+from decisao.logica_decisao import decidir_via
+from decisao.mapeamento_vias import mapear_deteccoes
 
 from estado_sistema import (
     atualizar_resultado_yolo,
@@ -66,24 +51,16 @@ def iniciar_dashboard():
     def servidor():
 
         uvicorn.run(
-
             app,
-
             host=DASHBOARD_HOST,
-
             port=DASHBOARD_PORT,
-
             log_level="warning"
         )
 
-
     thread = threading.Thread(
-
         target=servidor,
-
         daemon=True
     )
-
 
     thread.start()
 
@@ -92,161 +69,73 @@ def iniciar_dashboard():
 # SEMAFOROS
 # =====================================================
 
-def processar_semaforos(
-    mensagem
-):
+def processar_semaforos(mensagem):
 
-    """
-    Compatibilidade com versões que enviam:
-
-    SEMAFOROS:A=VERDE,B=VERMELHO,...
-    """
-
-    payload = (
-        mensagem
-        .split(
-            ":",
-            1
-        )[1]
-    )
-
+    payload = mensagem.split(":", 1)[1]
 
     estados = {}
-
 
     for item in payload.split(","):
 
         if "=" not in item:
-
             continue
 
-
-        via, cor = (
-            item.split(
-                "=",
-                1
-            )
-        )
-
+        via, cor = item.split("=", 1)
 
         estados[
-            via
-            .strip()
-            .upper()
-        ] = (
-            cor
-            .strip()
-            .lower()
-        )
+            via.strip().upper()
+        ] = cor.strip().lower()
 
-
-    atualizar_semaforos(
-        estados
-    )
+    atualizar_semaforos(estados)
 
 
 # =====================================================
 # VIA ABERTA
 # =====================================================
 
-def processar_via_aberta(
-    mensagem
-):
-
-    """
-    Protocolo usado pelo Arduino desta branch:
-
-    VIA_ABERTA:A
-    """
+def processar_via_aberta(mensagem):
 
     via = (
         mensagem
-        .split(
-            ":",
-            1
-        )[1]
+        .split(":", 1)[1]
         .strip()
         .upper()
     )
 
-
-    atualizar_via_aberta(
-        via
-    )
+    atualizar_via_aberta(via)
 
 
 # =====================================================
 # SENSORES
 # =====================================================
 
-def processar_sensores(
-    mensagem
-):
+def processar_sensores(mensagem):
 
-    """
-    Processa:
-
-    SENSORES:0,1,0,0
-
-    Ordem:
-    A,B,C,D
-    """
-
-    payload = (
-        mensagem
-        .split(
-            ":",
-            1
-        )[1]
-    )
-
+    payload = mensagem.split(":", 1)[1]
 
     valores = [
-
-        item.strip()
-
-        for item
-        in payload.split(",")
+        valor.strip()
+        for valor in payload.split(",")
     ]
 
-
     if len(valores) < 4:
-
         return
-
 
     estados = {}
 
-
     for via, valor in zip(
-
-        (
-            "A",
-            "B",
-            "C",
-            "D"
-        ),
-
+        ("A", "B", "C", "D"),
         valores[:4]
     ):
 
-        estados[
-            via
-        ] = valor in (
-
+        estados[via] = valor in (
             "1",
-
             "true",
-
             "True",
-
             "HIGH"
         )
 
-
-    atualizar_sensores(
-        estados
-    )
+    atualizar_sensores(estados)
 
 
 # =====================================================
@@ -261,68 +150,36 @@ def salvar_log_analise(
 ):
 
     PASTA_LOGS.mkdir(
-
         parents=True,
-
         exist_ok=True
     )
 
-
     momento = datetime.now()
 
-
     caminho_log = (
-
         PASTA_LOGS
-
-        / (
-            "log_decisao_"
-            f"{momento.strftime('%Y-%m-%d')}"
-            ".jsonl"
-        )
+        / f"log_decisao_{momento.strftime('%Y-%m-%d')}.jsonl"
     )
 
-
     registro = {
-
-        "hora":
-            momento.strftime(
-                "%H:%M:%S"
-            ),
-
-        "via_gatilho":
-            via_gatilho,
-
-        "yolo":
-            resultado_yolo,
-
-        "mapeamento":
-            mapeamento,
-
-        "decisao":
-            decisao
+        "hora": momento.strftime("%H:%M:%S"),
+        "via_gatilho": via_gatilho,
+        "yolo": resultado_yolo,
+        "mapeamento": mapeamento,
+        "decisao": decisao
     }
 
-
     with open(
-
         caminho_log,
-
         "a",
-
         encoding="utf-8"
+    ) as arquivo:
 
-    ) as arquivo_log:
-
-        arquivo_log.write(
-
+        arquivo.write(
             json.dumps(
-
                 registro,
-
                 ensure_ascii=False
             )
-
             + "\n"
         )
 
@@ -337,92 +194,43 @@ def imprimir_decisao(
 ):
 
     print()
+    print("========== ANALISE DAS VIAS ==========")
 
-    print(
-        "----- ANALISE DAS VIAS -----"
-    )
+    for via in ("A", "B", "C", "D"):
 
-
-    for via in (
-        "A",
-        "B",
-        "C",
-        "D"
-    ):
-
-        dados = (
-            mapeamento[
-                "vias"
-            ][via]
-        )
-
+        dados = mapeamento["vias"][via]
 
         componentes = (
-
             decisao
-            .get(
-                "pontuacoes",
-                {}
-            )
-            .get(
-                via,
-                {}
-            )
+            .get("pontuacoes", {})
+            .get(via, {})
         )
 
-
         print(
-
             f"Via {via}: "
-
-            f"veiculos="
-            f"{dados['veiculos']} | "
-
-            f"congestionamento="
-            f"{dados['congestionamento']} | "
-
-            f"prioritario="
-            f"{dados['veiculo_prioritario']} | "
-
-            f"pontos="
-            f"{componentes.get('total', 0)}"
+            f"veiculos={dados['veiculos']} | "
+            f"congestionamento={dados['congestionamento']} | "
+            f"prioritario={dados['veiculo_prioritario']} | "
+            f"pontos={componentes.get('total', 0)}"
         )
 
+    print()
 
-    via = decisao.get(
-        "via"
-    )
-
-
-    if via:
-
-        print()
+    if decisao.get("via"):
 
         print(
-
-            f"DECISAO: VIA {via}"
-
-            f" | motivo="
-            f"{decisao.get('motivo')}"
-
-            f" | pontuacao="
-            f"{decisao.get('pontuacao')}"
+            f"DECISAO: VIA {decisao['via']} | "
+            f"motivo={decisao['motivo']} | "
+            f"pontuacao={decisao['pontuacao']}"
         )
-
 
     else:
-
-        print()
 
         print(
             "DECISAO: nenhuma via com demanda."
         )
 
-
-    print(
-        "-----------------------------"
-    )
-
+    print("======================================")
     print()
 
 
@@ -432,39 +240,19 @@ def imprimir_decisao(
 
 def main():
 
-    print(
-        "================================"
-    )
-
-    print(
-        " SISTEMA SEMAFORO INTELIGENTE "
-    )
-
-    print(
-        "================================"
-    )
-
+    print("==============================")
+    print(" SISTEMA SEMAFORO INTELIGENTE ")
+    print("==============================")
     print()
-
-
-    # ================================================
-    # DASHBOARD
-    # ================================================
 
     iniciar_dashboard()
 
-
     print(
-
         f"Dashboard iniciado na porta "
         f"{DASHBOARD_PORT}"
     )
 
-    print()
-
-
     arduino = None
-
 
     try:
 
@@ -472,92 +260,62 @@ def main():
         # BLUETOOTH
         # ============================================
 
-        arduino = (
-            ArduinoBluetooth()
-        )
-
+        arduino = ArduinoBluetooth()
 
         atualizar_status(
             "bluetooth",
             True
         )
 
-
         print(
             "Testando comunicacao Bluetooth..."
         )
 
-
-        if not (
-            arduino
-            .testar_conexao()
-        ):
+        if not arduino.testar_conexao():
 
             raise RuntimeError(
                 "Arduino nao respondeu PONG."
             )
 
-
         print(
             "Bluetooth Raspberry <-> Arduino: OK"
         )
 
-
-        # Estado inicial
-        arduino.enviar(
-            "S"
-        )
+        arduino.enviar("S")
 
 
         # ============================================
-        # CONTROLES DE TEMPO
+        # TEMPORIZADORES
         # ============================================
 
         ultima_captura = 0.0
-
         ultima_decisao_enviada = 0.0
-
-        ultima_consulta_status = (
-            time.time()
-        )
-
+        ultima_consulta_status = time.time()
 
         print()
-
-        print(
-            "Aguardando eventos..."
-        )
+        print("Aguardando eventos...")
 
 
         # ============================================
-        # LOOP PRINCIPAL
+        # LOOP
         # ============================================
 
         while True:
 
-            agora_loop = (
-                time.time()
-            )
+            agora_loop = time.time()
 
 
             # ========================================
-            # CONSULTA PERIODICA
+            # CONSULTAR ARDUINO
             # ========================================
 
             if (
-
                 agora_loop
                 - ultima_consulta_status
-
-                >=
-
-                INTERVALO_STATUS_ARDUINO
+                >= INTERVALO_STATUS_ARDUINO
             ):
 
-                arduino.enviar(
-                    "S"
-                )
-
+                arduino.enviar("S")
 
                 ultima_consulta_status = (
                     agora_loop
@@ -572,15 +330,12 @@ def main():
                 obter_comando_pendente()
             )
 
-
             if comando:
 
                 print(
-
                     f"Dashboard -> Arduino: "
                     f"{comando}"
                 )
-
 
                 arduino.enviar(
                     comando
@@ -588,26 +343,19 @@ def main():
 
 
             # ========================================
-            # RECEBER BLUETOOTH
+            # RECEBER MENSAGEM
             # ========================================
 
-            mensagem = (
-                arduino.ler()
-            )
-
+            mensagem = arduino.ler()
 
             if mensagem is None:
 
-                time.sleep(
-                    0.03
-                )
+                time.sleep(0.03)
 
                 continue
 
-
             print(
-
-                "Arduino -> Raspberry: "
+                f"Arduino -> Raspberry: "
                 f"{mensagem}"
             )
 
@@ -643,7 +391,7 @@ def main():
 
 
             # ========================================
-            # OUTRO PROTOCOLO DE SEMAFOROS
+            # SEMAFOROS
             # ========================================
 
             if mensagem.startswith(
@@ -669,39 +417,27 @@ def main():
 
 
             via_gatilho = (
-
                 mensagem
-                .split(
-                    ":",
-                    1
-                )[1]
+                .split(":", 1)[1]
                 .strip()
                 .upper()
             )
-
 
             registrar_deteccao(
                 via_gatilho
             )
 
 
-            agora_captura = (
-                time.time()
-            )
-
-
             # ========================================
-            # COOLDOWN
+            # COOLDOWN DA CAMERA
             # ========================================
+
+            agora_captura = time.time()
 
             if (
-
                 agora_captura
                 - ultima_captura
-
-                <
-
-                COOLDOWN_CAPTURA
+                < COOLDOWN_CAPTURA
             ):
 
                 continue
@@ -709,33 +445,26 @@ def main():
 
             imagem = None
 
-
             try:
 
                 # ====================================
                 # CAMERA
                 # ====================================
 
-                imagem = (
-                    capturar_imagem(
-                        via_gatilho
-                    )
+                imagem = capturar_imagem(
+                    via_gatilho
                 )
-
 
                 atualizar_status(
                     "camera",
                     True
                 )
 
-
                 ultima_captura = (
                     time.time()
                 )
 
-
                 print(
-
                     f"Imagem capturada: "
                     f"{imagem}"
                 )
@@ -748,7 +477,7 @@ def main():
                 if not YOLO_HABILITADO:
 
                     print(
-                        "YOLO desabilitado no config.py."
+                        "YOLO desabilitado."
                     )
 
                     continue
@@ -773,8 +502,7 @@ def main():
 
 
                 print(
-
-                    f"Resultado YOLO: "
+                    f"YOLO encontrou "
                     f"{len(resultado_yolo)} "
                     "deteccoes."
                 )
@@ -797,23 +525,17 @@ def main():
 
 
                 # ====================================
-                # LOGICA DE DECISAO
+                # DECISAO
                 # ====================================
 
-                estado = (
-                    obter_estado()
-                )
+                estado = obter_estado()
 
 
                 decisao = decidir_via(
 
-                    estado[
-                        "vias"
-                    ],
+                    estado["vias"],
 
-                    estado[
-                        "via_aberta"
-                    ]
+                    estado["via_aberta"]
                 )
 
 
@@ -829,15 +551,12 @@ def main():
 
 
                 # ====================================
-                # ENVIAR DECISAO
+                # ENVIAR PARA O ARDUINO
                 # ====================================
 
                 via_decidida = (
-                    decisao.get(
-                        "via"
-                    )
+                    decisao.get("via")
                 )
-
 
                 via_aberta = (
                     estado.get(
@@ -846,88 +565,77 @@ def main():
                     )
                 )
 
-
                 momento_decisao = (
                     time.time()
                 )
 
 
                 if (
-
                     via_decidida
-
                     and
-
-                    via_decidida
-                    !=
-                    via_aberta
-
+                    via_decidida != via_aberta
                     and
-
                     (
                         momento_decisao
                         - ultima_decisao_enviada
-                        >=
-                        INTERVALO_MIN_DECISAO
+                        >= INTERVALO_MIN_DECISAO
                     )
                 ):
 
-                    print(
+                    if (
+                        DECISAO_AUTOMATICA_HABILITADA
+                    ):
 
-                        "Decisao automatica -> Arduino: "
-                        f"Via {via_decidida}"
-                    )
+                        print(
+                            "Decisao automatica -> "
+                            f"Arduino: Via "
+                            f"{via_decidida}"
+                        )
 
+                        arduino.enviar(
+                            via_decidida
+                        )
 
-                    arduino.enviar(
-                        via_decidida
-                    )
+                        ultima_decisao_enviada = (
+                            momento_decisao
+                        )
 
+                    else:
 
-                    ultima_decisao_enviada = (
-                        momento_decisao
-                    )
+                        print(
+                            "MODO TESTE: "
+                            "decisao calculada, "
+                            "mas nao enviada -> "
+                            f"VIA {via_decidida}"
+                        )
 
 
                 # ====================================
-                # LOG
+                # SALVAR LOG
                 # ====================================
 
                 salvar_log_analise(
-
                     via_gatilho,
-
                     resultado_yolo,
-
                     mapeamento,
-
                     decisao
                 )
 
 
             except Exception as erro:
 
-                texto = str(
-                    erro
-                )
-
+                texto = str(erro).lower()
 
                 if (
-
-                    "camera"
-                    in texto.lower()
-
+                    "camera" in texto
                     or
-
-                    "rpicam"
-                    in texto.lower()
+                    "rpicam" in texto
                 ):
 
                     atualizar_status(
                         "camera",
                         False
                     )
-
 
                 else:
 
@@ -936,45 +644,36 @@ def main():
                         False
                     )
 
-
                 print(
-
                     "Erro no pipeline:",
-
                     erro
                 )
 
 
             finally:
 
-                # Imagem temporária.
+                # ====================================
+                # APAGAR OU MANTER FOTO
+                # ====================================
+
                 if (
-
                     imagem is not None
-
                     and
-
-                    os.path.exists(
-                        imagem
-                    )
+                    os.path.exists(imagem)
+                    and
+                    not MANTER_IMAGENS_TESTE
                 ):
 
-                    os.remove(
-                        imagem
-                    )
-
+                    os.remove(imagem)
 
                     print(
-
-                        f"-> Imagem {imagem} "
-                        "apagada."
+                        f"Imagem {imagem} apagada."
                     )
 
 
     except KeyboardInterrupt:
 
         print()
-
         print(
             "Sistema encerrado."
         )
@@ -995,15 +694,10 @@ def main():
             False
         )
 
-
         if arduino is not None:
 
             arduino.fechar()
 
-
-# =====================================================
-# EXECUCAO
-# =====================================================
 
 if __name__ == "__main__":
 
