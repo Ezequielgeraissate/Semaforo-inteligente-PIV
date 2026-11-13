@@ -117,3 +117,31 @@ def enviar_comando(
     return {
         "enviado": comando
     }
+
+
+# =====================================================
+# IMAGEM ATUAL ANALISADA PELO YOLO
+# =====================================================
+
+IMAGEM_YOLO_ATUAL = (
+    BASE_DIR
+    .parent
+    / "capturas"
+    / "sequencia_dashboard"
+    / "imagem_atual.jpg"
+)
+
+
+@app.get("/api/imagem-yolo")
+def imagem_yolo():
+
+    if not IMAGEM_YOLO_ATUAL.exists():
+
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhuma imagem analisada ainda"
+        )
+
+    return FileResponse(
+        IMAGEM_YOLO_ATUAL
+    )

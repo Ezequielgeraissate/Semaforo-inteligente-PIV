@@ -6,6 +6,9 @@ const VIAS = [
 ];
 
 
+let ultimaVersaoImagem = null;
+
+
 // =====================================================
 // CRIAR CARDS
 // =====================================================
@@ -16,6 +19,9 @@ function criarCards() {
         document.getElementById(
             "vias-grid"
         );
+
+
+    grid.innerHTML = "";
 
 
     VIAS.forEach(via => {
@@ -63,9 +69,9 @@ function criarCards() {
             </div>
 
 
-            <div class="metrics">
+            <div class="via-data">
 
-                <div class="metric">
+                <div>
 
                     <span>
                         Veículos
@@ -80,7 +86,7 @@ function criarCards() {
                 </div>
 
 
-                <div class="metric">
+                <div>
 
                     <span>
                         Congestionamento
@@ -89,13 +95,13 @@ function criarCards() {
                     <strong
                         id="congestionamento-${via}"
                     >
-                        Aguardando YOLO
+                        —
                     </strong>
 
                 </div>
 
 
-                <div class="metric">
+                <div>
 
                     <span>
                         Prioritário
@@ -110,7 +116,7 @@ function criarCards() {
                 </div>
 
 
-                <div class="metric">
+                <div>
 
                     <span>
                         Tempo de espera
@@ -127,14 +133,13 @@ function criarCards() {
             </div>
 
         </section>
-
         `;
     });
 }
 
 
 // =====================================================
-// COMPONENTES
+// STATUS DOS COMPONENTES
 // =====================================================
 
 function atualizarStatus(
@@ -143,7 +148,15 @@ function atualizarStatus(
 ) {
 
     const elemento =
-        document.getElementById(id);
+        document.getElementById(
+            id
+        );
+
+
+    if (!elemento) {
+
+        return;
+    }
 
 
     elemento.classList.remove(
@@ -153,7 +166,9 @@ function atualizarStatus(
     );
 
 
-    if (valor === true) {
+    if (
+        valor === true
+    ) {
 
         elemento.classList.add(
             "online"
@@ -194,12 +209,20 @@ function atualizarSemaforo(
 
     cores.forEach(cor => {
 
-        document
-            .getElementById(
+        const elemento =
+            document.getElementById(
                 `${via}-${cor}`
-            )
-            .classList
-            .remove("active");
+            );
+
+
+        if (elemento) {
+
+            elemento
+                .classList
+                .remove(
+                    "active"
+                );
+        }
     });
 
 
@@ -209,12 +232,20 @@ function atualizarSemaforo(
         )
     ) {
 
-        document
-            .getElementById(
+        const luz =
+            document.getElementById(
                 `${via}-${estado}`
-            )
-            .classList
-            .add("active");
+            );
+
+
+        if (luz) {
+
+            luz
+                .classList
+                .add(
+                    "active"
+                );
+        }
     }
 
 
@@ -224,8 +255,16 @@ function atualizarSemaforo(
         );
 
 
-    label.textContent =
-        estado.toUpperCase();
+    if (label) {
+
+        label.textContent = (
+            estado
+            ?
+            estado.toUpperCase()
+            :
+            "-"
+        );
+    }
 
 
     const card =
@@ -234,15 +273,71 @@ function atualizarSemaforo(
         );
 
 
-    card.classList.toggle(
-        "green-active",
-        estado === "verde"
-    );
+    if (card) {
+
+        card.classList.toggle(
+
+            "green-active",
+
+            estado === "verde"
+        );
+    }
 }
 
 
 // =====================================================
-// DADOS DO DASHBOARD
+// IMAGEM DO YOLO
+// =====================================================
+
+function atualizarImagemYolo(
+    versao
+) {
+
+    const imagem =
+        document.getElementById(
+            "imagem-yolo"
+        );
+
+
+    if (!imagem) {
+
+        return;
+    }
+
+
+    if (!versao) {
+
+        return;
+    }
+
+
+    // Não baixa novamente a mesma imagem.
+    if (
+        ultimaVersaoImagem
+        === versao
+    ) {
+
+        return;
+    }
+
+
+    ultimaVersaoImagem =
+        versao;
+
+
+    imagem.src =
+        "/api/imagem-yolo"
+        +
+        "?v="
+        +
+        encodeURIComponent(
+            versao
+        );
+}
+
+
+// =====================================================
+// ATUALIZAR TELA
 // =====================================================
 
 function atualizarTela(
@@ -273,33 +368,87 @@ function atualizarTela(
     );
 
 
-    document.getElementById(
-        "via-aberta"
-    ).textContent =
-        dados.via_aberta === "X"
-        ? "Nenhuma"
-        : `Via ${dados.via_aberta}`;
+    // =================================================
+    // RESUMO
+    // =================================================
+
+    const viaAberta =
+        document.getElementById(
+            "via-aberta"
+        );
 
 
-    document.getElementById(
-        "ultima-deteccao"
-    ).textContent =
-        dados.ultima_deteccao
-        ? `Via ${dados.ultima_deteccao}`
-        : "Nenhuma";
+    if (viaAberta) {
+
+        viaAberta.textContent = (
+
+            dados.via_aberta
+            ===
+            "X"
+
+            ?
+            "Nenhuma"
+
+            :
+            `Via ${dados.via_aberta}`
+        );
+    }
 
 
-    document.getElementById(
-        "ultima-atualizacao"
-    ).textContent =
-        dados.ultima_atualizacao
-        || "-";
+    const ultimaDeteccao =
+        document.getElementById(
+            "ultima-deteccao"
+        );
 
+
+    if (ultimaDeteccao) {
+
+        ultimaDeteccao.textContent = (
+
+            dados.ultima_deteccao
+
+            ?
+            `Via ${dados.ultima_deteccao}`
+
+            :
+            "Nenhuma"
+        );
+    }
+
+
+    const ultimaAtualizacao =
+        document.getElementById(
+            "ultima-atualizacao"
+        );
+
+
+    if (ultimaAtualizacao) {
+
+        ultimaAtualizacao.textContent =
+
+            dados.ultima_atualizacao
+
+            ||
+            "-";
+    }
+
+
+    // =================================================
+    // VIAS
+    // =================================================
 
     VIAS.forEach(via => {
 
         const dadosVia =
-            dados.vias[via];
+            dados.vias[
+                via
+            ];
+
+
+        if (!dadosVia) {
+
+            return;
+        }
 
 
         atualizarSemaforo(
@@ -308,43 +457,103 @@ function atualizarTela(
         );
 
 
-        document.getElementById(
-            `veiculos-${via}`
-        ).textContent =
-            dadosVia.veiculos
-            ?? "—";
+        const veiculos =
+            document.getElementById(
+                `veiculos-${via}`
+            );
 
 
-        document.getElementById(
-            `congestionamento-${via}`
-        ).textContent =
-            dadosVia.congestionamento
-            ?? "Aguardando YOLO";
+        if (veiculos) {
+
+            veiculos.textContent =
+
+                dadosVia.veiculos
+
+                ??
+                "—";
+        }
 
 
-        document.getElementById(
-            `prioritario-${via}`
-        ).textContent =
-            dadosVia.veiculo_prioritario
-            ? (
-                dadosVia.tipo_prioritario
-                ?? "Detectado"
-            )
-            : "Nenhum";
+        const congestionamento =
+            document.getElementById(
+                `congestionamento-${via}`
+            );
 
 
-        document.getElementById(
-            `espera-${via}`
-        ).textContent =
-            dadosVia.tempo_espera !== null
-            ? `${dadosVia.tempo_espera}s`
-            : "—";
+        if (congestionamento) {
+
+            congestionamento.textContent =
+
+                dadosVia.congestionamento
+
+                ??
+                "Aguardando YOLO";
+        }
+
+
+        const prioritario =
+            document.getElementById(
+                `prioritario-${via}`
+            );
+
+
+        if (prioritario) {
+
+            prioritario.textContent =
+
+                dadosVia
+                    .veiculo_prioritario
+
+                ?
+                (
+                    dadosVia
+                        .tipo_prioritario
+
+                    ??
+                    "Detectado"
+                )
+
+                :
+                "Nenhum";
+        }
+
+
+        const espera =
+            document.getElementById(
+                `espera-${via}`
+            );
+
+
+        if (espera) {
+
+            espera.textContent =
+
+                dadosVia
+                    .tempo_espera
+                !==
+                null
+
+                ?
+                `${dadosVia.tempo_espera}s`
+
+                :
+                "—";
+        }
     });
+
+
+    // =================================================
+    // IMAGEM
+    // =================================================
+
+    atualizarImagemYolo(
+        dados.ultima_atualizacao
+    );
 }
 
 
 // =====================================================
-// BUSCAR API
+// BUSCAR ESTADO
 // =====================================================
 
 async function carregarEstado() {
@@ -353,7 +562,9 @@ async function carregarEstado() {
 
         const resposta =
             await fetch(
+
                 "/api/status",
+
                 {
                     cache:
                         "no-store"
@@ -380,7 +591,9 @@ async function carregarEstado() {
     } catch (erro) {
 
         console.error(
+
             "Erro ao atualizar dashboard:",
+
             erro
         );
     }
@@ -396,7 +609,7 @@ criarCards();
 carregarEstado();
 
 
-// Atualiza duas vezes por segundo
+// Dados continuam atualizando rapidamente.
 setInterval(
     carregarEstado,
     500

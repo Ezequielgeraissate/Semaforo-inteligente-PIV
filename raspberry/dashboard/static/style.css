@@ -570,3 +570,92 @@ footer {
             1fr;
     }
 }
+
+
+/* =========================================
+   IMAGEM ANALISADA PELO YOLO
+========================================= */
+
+.yolo-image-card {
+
+    margin-top: 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(24, 45, 73, 0.96),
+            rgba(10, 23, 39, 0.96)
+        );
+
+    border:
+        1px solid
+        var(--card-border);
+
+    border-radius: 22px;
+
+    padding: 24px;
+}
+
+
+.yolo-image-header {
+
+    margin-bottom: 18px;
+}
+
+
+.yolo-image-label {
+
+    display: block;
+
+    color: var(--blue);
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 7px;
+}
+
+
+.yolo-image-header h2 {
+
+    margin-bottom: 5px;
+}
+
+
+.yolo-image-header p {
+
+    color: var(--muted);
+
+    font-size: 14px;
+}
+
+
+.yolo-image-container {
+
+    width: 100%;
+
+    overflow: hidden;
+
+    border-radius: 16px;
+
+    background: #050b14;
+
+    border:
+        1px solid
+        var(--card-border);
+}
+
+
+.yolo-image-container img {
+
+    display: block;
+
+    width: 100%;
+
+    max-height: 650px;
+
+    object-fit: contain;
+}
